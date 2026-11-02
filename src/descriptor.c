@@ -141,6 +141,30 @@ static const dc_hw_id_entry_t g_hw_id_map[] = {
 	{DC_FAMILY_HW_OSTC3, 0x44, 0x3B44, "OSTC 5"},
 };
 
+static int dc_filter_sunroad (const dc_descriptor_t *descriptor, dc_transport_t transport, const void *userdata)
+{
+	(void) descriptor;
+	if (transport != DC_TRANSPORT_BLE || userdata == NULL)
+		return 0;
+
+	const char *name = (const char *) userdata;
+
+	/*
+	 * The Sunroad D3 advertises as "  D3- XXXX" (with two leading spaces
+	 * and a 4-hex-character MAC suffix) or "D3-XXXX" / "Sunroad D3" if
+	 * trimmed by the OS Bluetooth stack. Skip any leading spaces first.
+	 */
+	while (*name == ' ')
+		name++;
+
+	if (strncasecmp (name, "D3-", 3) == 0 ||
+		strncasecmp (name, "D3 ", 3) == 0 ||
+		strncasecmp (name, "Sunroad", 7) == 0)
+		return 1;
+
+	return 0;
+}
+
 static const dc_descriptor_t g_descriptors[] = {
 	/* Suunto Solution */
 	{"Suunto", "Solution", DC_FAMILY_SUUNTO_SOLUTION, 0, DC_TRANSPORT_SERIAL, NULL},
@@ -543,6 +567,8 @@ static const dc_descriptor_t g_descriptors[] = {
 	/* Halcyon Symbios */
 	{"Halcyon", "Symbios HUD",     DC_FAMILY_HALCYON_SYMBIOS, 1, DC_TRANSPORT_BLE, dc_filter_halcyon},
 	{"Halcyon", "Symbios Handset", DC_FAMILY_HALCYON_SYMBIOS, 7, DC_TRANSPORT_BLE, dc_filter_halcyon},
+	/* Sunroad */
+	{"Sunroad", "D3",               DC_FAMILY_SUNROAD_D3, 0, DC_TRANSPORT_BLE, dc_filter_sunroad},
 
 	/* Garmin */
 #define GARMIN_DESCRIPTOR(name, id, mtp_capable) {"Garmin", name, DC_FAMILY_GARMIN, id, DC_TRANSPORT_USBSTORAGE, NULL},
